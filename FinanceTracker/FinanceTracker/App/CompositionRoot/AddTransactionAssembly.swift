@@ -1,11 +1,10 @@
 import UIKit
 
-enum AddTransactionAssembly {
-    static func build(
+final class AddTransactionAssembly {
+    func build(
         navigationController: UINavigationController,
         session: UserSession
     ) -> UIViewController {
-
         let viewController = AddTransactionViewController()
 
         let router = AddTransactionRouterImpl(
@@ -14,7 +13,7 @@ enum AddTransactionAssembly {
 
         let presenter = AddTransactionPresenterStub(
             view: viewController,
-            router: router,
+            router: router
         )
 
         viewController.presenter = presenter

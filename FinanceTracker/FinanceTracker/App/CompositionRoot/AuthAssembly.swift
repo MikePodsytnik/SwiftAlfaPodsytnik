@@ -1,12 +1,16 @@
 import UIKit
 
-enum AuthAssembly {
-    static func build(navigationController: UINavigationController) -> UIViewController {
+final class AuthAssembly {
+    func build(navigationController: UINavigationController) -> UIViewController {
         let viewController = AuthViewController()
+
+        let repository = AuthRepositoryImpl()
+        let useCase = LoginUseCaseImpl(repository: repository)
         let router = AuthRouterImpl(navigationController: navigationController)
 
-        let presenter = AuthPresenterStub(
+        let presenter = AuthPresenterImpl(
             view: viewController,
+            loginUseCase: useCase,
             router: router
         )
 

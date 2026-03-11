@@ -1,5 +1,6 @@
 # Finance Tracker
 
+# Лабораторная 2
 ## Архитектура
 В проекте используется Clean Architecture. Состоящая из слоёв: UI (UIKit), Presentation, Application (Use Cases), Domain и Data.
 
@@ -19,7 +20,7 @@
 
 ``` swift
 enum AuthViewState: Equatable {
-    case initial
+    case idle
     case loading
     case error(String)
 }
@@ -123,7 +124,7 @@ enum TransactionDetailsViewState: Equatable {
 
 ``` swift
 enum AddTransactionViewState: Equatable {
-    case initial
+    case idle
     case loading
     case validationError(String)
     case error(String)
@@ -172,26 +173,31 @@ protocol TransactionsListView: AnyObject {
 protocol TransactionsListPresenter {
     func didLoad()
     func didSelectTransaction(id: TransactionID)
+    func didTapAddTransaction()
 }
 ```
 
 ### Presentation <-> Application (UseCases)
 
 ``` swift
-protocol LoginUseCase {
-    func execute(email: String, password: String) async throws -> UserSession
-}
-
-protocol FetchTransactionsUseCase {
-    func execute(userId: UserID) async throws -> [Transaction]
-}
-
-protocol GetTransactionDetailsUseCase {
-    func execute(id: TransactionID) async throws -> Transaction
+protocol CreateTransactionUseCase {
+    func execute(userId: UserID, transaction: Transaction) throws
 }
 
 protocol DeleteTransactionUseCase {
-    func execute(id: TransactionID) async throws
+    func execute(id: TransactionID) throws
+}
+
+protocol FetchTransactionsUseCase {
+    func execute(userId: UserID) throws -> [Transaction]
+}
+
+protocol GetTransactionDetailsUseCase {
+    func execute(id: TransactionID) throws -> Transaction
+}
+
+protocol LoginUseCase {
+    func execute(email: String, password: String) throws -> UserSession
 }
 ```
 
@@ -199,13 +205,14 @@ protocol DeleteTransactionUseCase {
 
 ``` swift
 protocol AuthRepository {
-    func login(email: String, password: String) async throws -> UserSession
+    func login(email: String, password: String) throws -> UserSession
 }
 
 protocol TransactionsRepository {
-    func fetchTransactions(userId: UserID) async throws -> [Transaction]
-    func fetchTransaction(id: TransactionID) async throws -> Transaction
-    func deleteTransaction(id: TransactionID) async throws
+    func fetchTransactions(userId: UserID) throws -> [Transaction]
+    func fetchTransaction(id: TransactionID) throws -> Transaction
+    func createTransaction(userId: UserID, transaction: Transaction) throws
+    func deleteTransaction(id: TransactionID) throws
 }
 ```
 
@@ -218,9 +225,14 @@ protocol AuthRouter {
 
 protocol TransactionsListRouter {
     func openTransactionDetails(id: TransactionID)
+    func openAddTransaction()
 }
 
 protocol TransactionDetailsRouter {
+    func close()
+}
+
+protocol AddTransactionRouter {
     func close()
 }
 ```
@@ -279,4 +291,22 @@ UI → Presentation → Application → Domain → Data
 мок View и мок UseCase, UseCase тестируется через мок Repository, Data
 слой можно тестировать отдельно
 
+# Лабораторная 3
 
+После запуска теперь открывается экран авторизации.
+
+Экран реализован на **UIKit** и содержит:
+
+- поле ввода **Email**
+- поле ввода **Password**
+- кнопку **Login**
+
+Для корректной работы на маленьких экранах используются `UIScrollView` и динамическое изменение `contentInset` при появлении клавиатуры
+
+Репозиторий проверяет логин и пароль и возвращает сессию.
+
+Данные для входа.
+Email: admin@test.com
+Password: 123456
+
+При успешной авторизации выполняется переход на экран TransactionsList
