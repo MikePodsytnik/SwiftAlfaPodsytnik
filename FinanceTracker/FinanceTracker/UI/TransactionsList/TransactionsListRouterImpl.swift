@@ -12,7 +12,7 @@ final class TransactionsListRouterImpl: TransactionsListRouter {
 
     func openTransactionDetails(id: TransactionID) {
         guard let navigationController else { return }
-        let vc = TransactionDetailsAssembly.build(
+        let vc = TransactionDetailsAssembly().build(
             navigationController: navigationController,
             id: id,
             session: session
@@ -22,7 +22,7 @@ final class TransactionsListRouterImpl: TransactionsListRouter {
 
     func openAddTransaction() {
         guard let navigationController else { return }
-        let vc = AddTransactionAssembly.build(
+        let vc = AddTransactionAssembly().build(
             navigationController: navigationController,
             session: session
         )
