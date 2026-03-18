@@ -9,8 +9,25 @@ final class TransactionsListPresenterStub: TransactionsListPresenter {
     }
 
     func didLoad() {
+
         view?.render(.loading)
-        view?.render(.empty) 
+
+        let items = [
+            TransactionItemViewModel(
+                id: "1",
+                title: "Coffee",
+                subtitle: "Food",
+                formattedAmount: "-350 Рублей"
+            ),
+            TransactionItemViewModel(
+                id: "2",
+                title: "Salary",
+                subtitle: "Income",
+                formattedAmount: "+15000 Рублей"
+            )
+        ]
+
+        view?.render(.content(items))
     }
 
     func didSelectTransaction(id: TransactionID) {

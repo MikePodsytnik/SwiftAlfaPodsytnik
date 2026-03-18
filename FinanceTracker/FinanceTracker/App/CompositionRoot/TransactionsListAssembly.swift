@@ -1,11 +1,10 @@
 import UIKit
 
-enum TransactionsListAssembly {
-    static func build(
+final class TransactionsListAssembly {
+    func build(
         navigationController: UINavigationController,
         session: UserSession
     ) -> UIViewController {
-
         let viewController = TransactionsListViewController()
 
         let router = TransactionsListRouterImpl(
