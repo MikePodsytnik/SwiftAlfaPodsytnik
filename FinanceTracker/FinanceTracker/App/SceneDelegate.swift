@@ -13,7 +13,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
 
         let navigation = UINavigationController()
-        let authVC = AuthAssembly.build(navigationController: navigation)
+        let authVC = AuthAssembly().build(navigationController: navigation)
         navigation.viewControllers = [authVC]
 
         window.rootViewController = navigation

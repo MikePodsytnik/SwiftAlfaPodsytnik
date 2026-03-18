@@ -27,14 +27,15 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
     }
 
     func render(_ state: TransactionsListViewState) {
-
         switch state {
+        case .idle:
+            label.text = "Idle"
 
         case .loading:
             label.text = "Loading..."
 
-        case .content(let items):
-            label.text = "Transactions loaded: \(items.count)"
+        case .content(let items, _):
+            label.text = "Loaded: \(items.count)"
 
         case .empty:
             label.text = "No transactions"

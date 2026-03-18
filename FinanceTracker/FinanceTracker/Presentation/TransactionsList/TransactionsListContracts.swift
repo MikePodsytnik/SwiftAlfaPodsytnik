@@ -2,8 +2,10 @@ protocol TransactionsListView: AnyObject {
     func render(_ state: TransactionsListViewState)
 }
 
-protocol TransactionsListPresenter {
+protocol TransactionsListPresenter: AnyObject {
     func didLoad()
+    func didTapRetry()
+    func didReachListEnd()
     func didSelectTransaction(id: TransactionID)
     func didTapAddTransaction()
 }
