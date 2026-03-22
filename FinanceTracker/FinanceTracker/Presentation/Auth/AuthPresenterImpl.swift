@@ -1,6 +1,5 @@
 final class AuthPresenterImpl: AuthPresenter {
-
-    private weak var view: AuthView?
+    weak var view: AuthView?
     private let loginUseCase: LoginUseCase
     private let router: AuthRouter
 
@@ -19,19 +18,15 @@ final class AuthPresenterImpl: AuthPresenter {
     }
 
     func didTapLogin(email: String, password: String) {
-
         view?.render(.loading)
 
         do {
-            let session = try loginUseCase.execute(
-                email: email,
-                password: password
-            )
-
+            let session = try loginUseCase.execute(email: email, password: password)
             router.openTransactionsList(session: session)
-
+        } catch let error as AuthError {
+            view?.render(.error(error.localizedDescription))
         } catch {
-            view?.render(.error("Invalid email or password"))
+            view?.render(.error("Something went wrong"))
         }
     }
 }

@@ -11,11 +11,11 @@ final class AuthRouterImpl: AuthRouter {
     func openTransactionsList(session: UserSession) {
         guard let navigationController else { return }
 
-        let vc = TransactionsListAssembly().build(
+        let viewController = TransactionsListAssembly().build(
             navigationController: navigationController,
             session: session
         )
 
-        navigationController.pushViewController(vc, animated: true)
+        navigationController.setViewControllers([viewController], animated: true)
     }
 }

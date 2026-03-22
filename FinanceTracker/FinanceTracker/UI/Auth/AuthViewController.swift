@@ -54,11 +54,14 @@ final class AuthViewController: UIViewController, AuthView {
         return label
     }()
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
         view.backgroundColor = .systemBackground
-
         setupLayout()
         setupActions()
         setupKeyboardObservers()
@@ -66,13 +69,7 @@ final class AuthViewController: UIViewController, AuthView {
         presenter?.didLoad()
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        presenter?.didLoad()
-    }
-
     private func setupActions() {
-
         loginButton.addTarget(
             self,
             action: #selector(didTapLogin),
@@ -84,7 +81,6 @@ final class AuthViewController: UIViewController, AuthView {
     }
 
     private func setupLayout() {
-
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
 
@@ -93,7 +89,6 @@ final class AuthViewController: UIViewController, AuthView {
         }
 
         NSLayoutConstraint.activate([
-
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -132,9 +127,7 @@ final class AuthViewController: UIViewController, AuthView {
     }
 
     func render(_ state: AuthViewState) {
-
         switch state {
-
         case .idle:
             loginButton.isEnabled = true
             errorLabel.isHidden = true
@@ -163,7 +156,6 @@ private extension AuthViewController {
 
     @objc
     func keyboardWillChangeFrame(_ note: Notification) {
-
         guard
             let userInfo = note.userInfo,
             let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
@@ -179,7 +171,6 @@ private extension AuthViewController {
 
 extension AuthViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-
         if textField == emailField {
             passwordField.becomeFirstResponder()
         } else {
