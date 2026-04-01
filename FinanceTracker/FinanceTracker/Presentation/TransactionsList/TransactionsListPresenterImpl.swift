@@ -13,6 +13,7 @@ final class TransactionsListPresenterImpl: TransactionsListPresenter {
     private var currentSkip = 0
     private var isLoading = false
     private var didLoadFirstPage = false
+    private var hasMorePages = true
 
     private var loadTask: Task<Void, Never>?
 
@@ -43,10 +44,9 @@ final class TransactionsListPresenterImpl: TransactionsListPresenter {
     }
 
     func didReachListEnd() {
-        guard !isLoading else { return }
-        guard items.count < totalCount || totalCount == 0 else { return }
         guard didLoadFirstPage else { return }
-
+        guard !isLoading else { return }
+        guard hasMorePages else { return }
         loadNextPage()
     }
 
@@ -63,6 +63,7 @@ final class TransactionsListPresenterImpl: TransactionsListPresenter {
         isLoading = true
         currentSkip = 0
         totalCount = 0
+        hasMorePages = true
 
         if forceReload {
             items = []
@@ -88,12 +89,17 @@ final class TransactionsListPresenterImpl: TransactionsListPresenter {
                     self.isLoading = false
                     self.currentSkip = page.skip + page.items.count
                     self.totalCount = page.total
+                    self.hasMorePages = page.hasMore
                     self.items = mapped
 
                     if mapped.isEmpty {
                         self.view?.render(.empty)
                     } else {
-                        self.view?.render(.content(mapped, isNextPageLoading: false))
+                        self.view?.render(.content(
+                            items: mapped,
+                            update: .reload,
+                            pagination: .idle
+                        ))
                     }
                 }
             } catch {
@@ -112,9 +118,16 @@ final class TransactionsListPresenterImpl: TransactionsListPresenter {
     }
 
     private func loadNextPage() {
+        guard !items.isEmpty else { return }
+
         loadTask?.cancel()
         isLoading = true
-        view?.render(.content(items, isNextPageLoading: true))
+
+        view?.render(.content(
+            items: items,
+            update: .none,
+            pagination: .loading
+        ))
 
         let nextSkip = currentSkip
 
@@ -136,19 +149,27 @@ final class TransactionsListPresenterImpl: TransactionsListPresenter {
                     self.isLoading = false
                     self.currentSkip = page.skip + page.items.count
                     self.totalCount = page.total
+                    self.hasMorePages = page.hasMore
                     self.items.append(contentsOf: mapped)
-                    self.view?.render(.content(self.items, isNextPageLoading: false))
+
+                    self.view?.render(.content(
+                        items: self.items,
+                        update: .append(newItems: mapped),
+                        pagination: .idle
+                    ))
                 }
             } catch {
                 if case NetworkError.cancelled = error {
                     return
                 }
 
-                let message = Self.mapErrorToMessage(error)
-
                 await MainActor.run {
                     self.isLoading = false
-                    self.view?.render(.error(message))
+                    self.view?.render(.content(
+                        items: self.items,
+                        update: .none,
+                        pagination: .idle
+                    ))
                 }
             }
         }
