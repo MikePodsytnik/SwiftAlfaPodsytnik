@@ -9,46 +9,19 @@ final class TransactionsListManager: NSObject {
 
     weak var delegate: TransactionsListManagerDelegate?
 
-    private weak var tableView: UITableView?
     private var items: [TransactionItemViewModel] = []
     private let paginationThreshold = 5
     private var isNextPageRequestInFlight = false
 
-    private let footerActivityIndicator: UIActivityIndicatorView = {
-        let view = UIActivityIndicatorView(style: .medium)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.hidesWhenStopped = true
-        return view
-    }()
-
-    private lazy var footerLoaderView: UIView = {
-        let container = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 52))
-        container.addSubview(footerActivityIndicator)
-
-        NSLayoutConstraint.activate([
-            footerActivityIndicator.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            footerActivityIndicator.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-        ])
-
-        return container
-    }()
-
-    init(tableView: UITableView) {
-        self.tableView = tableView
-        super.init()
-        configure(tableView)
-    }
-
-    func setInitialItems(_ items: [TransactionItemViewModel]) {
+    func setItems(_ items: [TransactionItemViewModel]) {
         self.items = items
-        tableView?.reloadData()
         isNextPageRequestInFlight = false
     }
 
-    func appendItems(_ newItems: [TransactionItemViewModel]) {
-        guard !newItems.isEmpty, let tableView else {
+    func appendItems(_ newItems: [TransactionItemViewModel]) -> [IndexPath] {
+        guard !newItems.isEmpty else {
             isNextPageRequestInFlight = false
-            return
+            return []
         }
 
         let startIndex = items.count
@@ -56,45 +29,18 @@ final class TransactionsListManager: NSObject {
         let indexPaths = (startIndex..<endIndex).map { IndexPath(row: $0, section: 0) }
 
         items.append(contentsOf: newItems)
-
-        tableView.performBatchUpdates {
-            tableView.insertRows(at: indexPaths, with: .none)
-        }
-
         isNextPageRequestInFlight = false
+
+        return indexPaths
     }
 
     func clear() {
         items = []
-        tableView?.reloadData()
         isNextPageRequestInFlight = false
     }
 
-    func showBottomLoader(_ isVisible: Bool) {
-        guard let tableView else { return }
-
-        isNextPageRequestInFlight = isVisible
-
-        if isVisible {
-            footerActivityIndicator.startAnimating()
-            tableView.tableFooterView = footerLoaderView
-        } else {
-            footerActivityIndicator.stopAnimating()
-            tableView.tableFooterView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 1))
-        }
-    }
-
-    private func configure(_ tableView: UITableView) {
-        tableView.register(
-            TransactionsListCell.self,
-            forCellReuseIdentifier: TransactionsListCell.reuseIdentifier
-        )
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 76
-        tableView.keyboardDismissMode = .onDrag
-        tableView.tableFooterView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 1))
+    func setNextPageRequestInFlight(_ value: Bool) {
+        isNextPageRequestInFlight = value
     }
 }
 

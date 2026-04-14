@@ -12,7 +12,26 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
 
     private let loadingView = LoadingView()
     private let placeholderView = PlaceholderView()
-    private var listManager: TransactionsListManager?
+    private let listManager = TransactionsListManager()
+
+    private let footerActivityIndicator: UIActivityIndicatorView = {
+        let view = UIActivityIndicatorView(style: .medium)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.hidesWhenStopped = true
+        return view
+    }()
+
+    private lazy var footerLoaderView: UIView = {
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 52))
+        container.addSubview(footerActivityIndicator)
+
+        NSLayoutConstraint.activate([
+            footerActivityIndicator.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            footerActivityIndicator.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+
+        return container
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,7 +41,8 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
 
         setupNavigation()
         setupLayout()
-        setupListManager()
+        setupTableView()
+        setupTableFooter()
 
         presenter?.didLoad()
     }
@@ -34,36 +54,46 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
             loadingView.isHidden = true
             placeholderView.isHidden = true
             tableView.isHidden = true
-            listManager?.showBottomLoader(false)
+            showBottomLoader(false)
+            listManager.setNextPageRequestInFlight(false)
 
         case .loading:
             loadingView.isHidden = false
             loadingView.start()
             placeholderView.isHidden = true
             tableView.isHidden = true
-            listManager?.showBottomLoader(false)
+            showBottomLoader(false)
+            listManager.setNextPageRequestInFlight(false)
 
-        case .content(_, let update, let pagination):
+        case .content(let items, let update, let pagination):
             tableView.isHidden = false
             placeholderView.isHidden = true
             loadingView.stop()
             loadingView.isHidden = true
-            listManager?.showBottomLoader(pagination == .loading)
+            showBottomLoader(pagination == .loading)
+            listManager.setNextPageRequestInFlight(pagination == .loading)
 
             switch update {
             case .none:
                 break
+
             case .reload:
-                if case let .content(items, _, _) = state {
-                    listManager?.setInitialItems(items)
-                }
+                listManager.setItems(items)
+                tableView.reloadData()
+
             case .append(let newItems):
-                listManager?.appendItems(newItems)
+                let indexPaths = listManager.appendItems(newItems)
+                guard !indexPaths.isEmpty else { return }
+
+                tableView.performBatchUpdates {
+                    tableView.insertRows(at: indexPaths, with: .none)
+                }
             }
 
         case .empty:
-            listManager?.clear()
-            listManager?.showBottomLoader(false)
+            listManager.clear()
+            tableView.reloadData()
+            showBottomLoader(false)
             tableView.isHidden = true
             loadingView.stop()
             loadingView.isHidden = true
@@ -78,8 +108,9 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
             )
 
         case .error(let message):
-            listManager?.clear()
-            listManager?.showBottomLoader(false)
+            listManager.clear()
+            tableView.reloadData()
+            showBottomLoader(false)
             tableView.isHidden = true
             loadingView.stop()
             loadingView.isHidden = true
@@ -129,10 +160,32 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
         placeholderView.isHidden = true
     }
 
-    private func setupListManager() {
-        let manager = TransactionsListManager(tableView: tableView)
-        manager.delegate = self
-        listManager = manager
+    private func setupTableView() {
+        tableView.register(
+            TransactionsListCell.self,
+            forCellReuseIdentifier: TransactionsListCell.reuseIdentifier
+        )
+        tableView.dataSource = listManager
+        tableView.delegate = listManager
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 76
+        tableView.keyboardDismissMode = .onDrag
+
+        listManager.delegate = self
+    }
+
+    private func setupTableFooter() {
+        tableView.tableFooterView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 1))
+    }
+
+    private func showBottomLoader(_ isVisible: Bool) {
+        if isVisible {
+            footerActivityIndicator.startAnimating()
+            tableView.tableFooterView = footerLoaderView
+        } else {
+            footerActivityIndicator.stopAnimating()
+            tableView.tableFooterView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 1))
+        }
     }
 
     @objc
