@@ -14,7 +14,8 @@ final class TransactionDetailsAssembly {
 
         let presenter = TransactionDetailsPresenterStub(
             view: viewController,
-            router: router
+            router: router,
+            id: id
         )
 
         viewController.presenter = presenter
