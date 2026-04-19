@@ -4,24 +4,31 @@ final class TransactionsListCell: UITableViewCell {
 
     static let reuseIdentifier = "TransactionsListCell"
 
+    private let cardView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = DS.Colors.surface
+        view.layer.cornerRadius = DS.Radius.l
+        return view
+    }()
+
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .boldSystemFont(ofSize: 17)
+        label.apply(.headline)
         label.numberOfLines = 1
         return label
     }()
 
     private let subtitleLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 14)
-        label.textColor = .secondaryLabel
+        label.apply(.caption)
         label.numberOfLines = 2
         return label
     }()
 
     private let amountLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.apply(.bodyMedium)
         label.textAlignment = .right
         label.setContentCompressionResistancePriority(.required, for: .horizontal)
         label.setContentHuggingPriority(.required, for: .horizontal)
@@ -31,7 +38,7 @@ final class TransactionsListCell: UITableViewCell {
     private let textStackView: UIStackView = {
         let view = UIStackView()
         view.axis = .vertical
-        view.spacing = 4
+        view.spacing = DS.Spacing.xs
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -40,7 +47,7 @@ final class TransactionsListCell: UITableViewCell {
         let view = UIStackView()
         view.axis = .horizontal
         view.alignment = .top
-        view.spacing = 12
+        view.spacing = DS.Spacing.m
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -68,7 +75,9 @@ final class TransactionsListCell: UITableViewCell {
     }
 
     private func setupLayout() {
-        accessoryType = .disclosureIndicator
+        backgroundColor = .clear
+        selectionStyle = .none
+        contentView.backgroundColor = .clear
 
         textStackView.addArrangedSubview(titleLabel)
         textStackView.addArrangedSubview(subtitleLabel)
@@ -76,13 +85,19 @@ final class TransactionsListCell: UITableViewCell {
         contentStackView.addArrangedSubview(textStackView)
         contentStackView.addArrangedSubview(amountLabel)
 
-        contentView.addSubview(contentStackView)
+        contentView.addSubview(cardView)
+        cardView.addSubview(contentStackView)
 
         NSLayoutConstraint.activate([
-            contentStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            contentStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            contentStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            contentStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
+            cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: DS.Spacing.s),
+            cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: DS.Spacing.l),
+            cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -DS.Spacing.l),
+            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -DS.Spacing.s),
+
+            contentStackView.topAnchor.constraint(equalTo: cardView.topAnchor, constant: DS.Spacing.l),
+            contentStackView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: DS.Spacing.l),
+            contentStackView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -DS.Spacing.l),
+            contentStackView.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -DS.Spacing.l)
         ])
     }
 }
