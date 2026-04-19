@@ -383,3 +383,116 @@ Endpoint:
 
 При тапе на элемент списка открывается экран деталей транзакции (заглушка).
 Навигация реализована через router.
+
+# Лабораторная 6
+
+## Токены дизайн-системы
+
+### Colors
+- `background`
+- `surface`
+- `primary`
+- `secondary`
+- `textPrimary`
+- `textSecondary`
+- `textOnPrimary`
+- `error`
+- `success`
+- `border`
+- `fieldBackground`
+- `divider`
+
+Все цвета поддерживают Light/Dark режим через dynamic `UIColor`.
+
+### Typography
+- `largeTitle`
+- `title`
+- `headline`
+- `body`
+- `bodyMedium`
+- `caption`
+- `error`
+- `button`
+
+Реализованы через:
+- `DS.Typography.font(for:)`
+- `DS.Typography.color(for:)`
+
+Также есть extension:
+- `UILabel.apply(_ style: TextStyle)`
+
+### Spacing
+- `xs`
+- `s`
+- `m`
+- `l`
+- `xl`
+- `xxl`
+
+### Radius
+- `s`
+- `m`
+- `l`
+
+## Компоненты
+
+Реализованы переиспользуемые UI-компоненты.
+
+### 1. DSButton
+- стили: `primary`, `secondary`, `destructive`
+- состояния: `normal`, `loading`, `disabled`
+- конфигурация через:
+  - `configure(title:)`
+  - `setState(_:)`
+
+### 2. DSTextField
+- состояния: `normal`, `focused`, `error`, `disabled`
+- ошибка является частью состояния:
+  - `setState(.error("message"))`
+
+### 3. DSStateView
+- состояния:
+  - `loading`
+  - `empty`
+  - `error`
+- поддерживает optional кнопку действия
+
+### 4. InfoRowView
+- отображение пары `title/value`
+
+## Где используется
+
+Дизайн-система применяется на экранах:
+- `AuthViewController`
+- `TransactionsListViewController`
+- `TransactionDetailsViewController`
+
+### AuthViewController
+Используются:
+- `DSButton`
+- `DSTextField`
+- текстовые стили DS
+
+### TransactionsListViewController
+Используются:
+- `DSStateView`
+- DS-ячейка списка
+- токены цветов и spacing
+
+### TransactionDetailsViewController
+Используются:
+- `DSStateView`
+- `DSButton`
+- `InfoRowView`
+
+## Как проверить состояния
+
+### 1. Auth экран
+- `loading` — при нажатии Login
+- `error` — при неверных данных
+
+### 2. TransactionsList
+- `loading` — при первой загрузке (а ещё если пытаться запустить без VPN, мой источник JSON не в белых списках :)))
+- `empty` — если отключить репозиторий
+- `error` — если отключить интернет
+
