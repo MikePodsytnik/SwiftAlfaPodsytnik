@@ -7,11 +7,12 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
     private let tableView: UITableView = {
         let view = UITableView(frame: .zero, style: .plain)
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .clear
+        view.separatorStyle = .none
         return view
     }()
 
-    private let loadingView = LoadingView()
-    private let placeholderView = PlaceholderView()
+    private let stateView = DSStateView()
     private let listManager = TransactionsListManager()
 
     private let footerActivityIndicator: UIActivityIndicatorView = {
@@ -22,7 +23,8 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
     }()
 
     private lazy var footerLoaderView: UIView = {
-        let container = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 52))
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 60))
+        container.backgroundColor = .clear
         container.addSubview(footerActivityIndicator)
 
         NSLayoutConstraint.activate([
@@ -36,7 +38,7 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = DS.Colors.background
         title = "Transactions"
 
         setupNavigation()
@@ -50,26 +52,27 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
     func render(_ state: TransactionsListViewState) {
         switch state {
         case .idle:
-            loadingView.stop()
-            loadingView.isHidden = true
-            placeholderView.isHidden = true
             tableView.isHidden = true
+            stateView.isHidden = true
             showBottomLoader(false)
             listManager.setNextPageRequestInFlight(false)
 
         case .loading:
-            loadingView.isHidden = false
-            loadingView.start()
-            placeholderView.isHidden = true
             tableView.isHidden = true
+            stateView.isHidden = false
+            stateView.configure(
+                state: .loading(
+                    title: "Loading transactions",
+                    message: "Please wait a moment"
+                ),
+                action: nil
+            )
             showBottomLoader(false)
             listManager.setNextPageRequestInFlight(false)
 
         case .content(let items, let update, let pagination):
             tableView.isHidden = false
-            placeholderView.isHidden = true
-            loadingView.stop()
-            loadingView.isHidden = true
+            stateView.isHidden = true
             showBottomLoader(pagination == .loading)
             listManager.setNextPageRequestInFlight(pagination == .loading)
 
@@ -86,23 +89,24 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
                 guard !indexPaths.isEmpty else { return }
 
                 tableView.performBatchUpdates {
-                    tableView.insertRows(at: indexPaths, with: .none)
+                    tableView.insertRows(at: indexPaths, with: .fade)
                 }
             }
 
         case .empty:
             listManager.clear()
             tableView.reloadData()
-            showBottomLoader(false)
             tableView.isHidden = true
-            loadingView.stop()
-            loadingView.isHidden = true
-            placeholderView.isHidden = false
-            placeholderView.configure(
-                title: "No transactions",
-                message: "There is nothing to show yet.",
-                buttonTitle: "Retry",
-                onTap: { [weak self] in
+            stateView.isHidden = false
+            showBottomLoader(false)
+
+            stateView.configure(
+                state: .empty(
+                    title: "No transactions",
+                    message: "There is nothing to show yet.",
+                    buttonTitle: "Retry"
+                ),
+                action: { [weak self] in
                     self?.presenter?.didTapRetry()
                 }
             )
@@ -110,16 +114,17 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
         case .error(let message):
             listManager.clear()
             tableView.reloadData()
-            showBottomLoader(false)
             tableView.isHidden = true
-            loadingView.stop()
-            loadingView.isHidden = true
-            placeholderView.isHidden = false
-            placeholderView.configure(
-                title: "Something went wrong",
-                message: message,
-                buttonTitle: "Retry",
-                onTap: { [weak self] in
+            stateView.isHidden = false
+            showBottomLoader(false)
+
+            stateView.configure(
+                state: .error(
+                    title: "Something went wrong",
+                    message: message,
+                    buttonTitle: "Retry"
+                ),
+                action: { [weak self] in
                     self?.presenter?.didTapRetry()
                 }
             )
@@ -136,8 +141,7 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
 
     private func setupLayout() {
         view.addSubview(tableView)
-        view.addSubview(loadingView)
-        view.addSubview(placeholderView)
+        view.addSubview(stateView)
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -145,19 +149,13 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            loadingView.topAnchor.constraint(equalTo: view.topAnchor),
-            loadingView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            loadingView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            loadingView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            placeholderView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            placeholderView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            placeholderView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            placeholderView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            stateView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            stateView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stateView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            stateView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
 
-        loadingView.isHidden = true
-        placeholderView.isHidden = true
+        stateView.isHidden = true
     }
 
     private func setupTableView() {
@@ -168,7 +166,7 @@ final class TransactionsListViewController: UIViewController, TransactionsListVi
         tableView.dataSource = listManager
         tableView.delegate = listManager
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 76
+        tableView.estimatedRowHeight = 96
         tableView.keyboardDismissMode = .onDrag
 
         listManager.delegate = self

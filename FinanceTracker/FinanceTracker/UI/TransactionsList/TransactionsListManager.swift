@@ -69,7 +69,6 @@ extension TransactionsListManager: UITableViewDataSource {
 
 extension TransactionsListManager: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
         delegate?.transactionsListManager(self, didSelect: items[indexPath.row].id)
     }
 

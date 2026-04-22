@@ -17,42 +17,37 @@ final class AuthViewController: UIViewController, AuthView {
         return view
     }()
 
-    private let emailField: UITextField = {
-        let field = UITextField()
-        field.placeholder = "Email"
-        field.borderStyle = .roundedRect
-        field.keyboardType = .emailAddress
-        field.autocapitalizationType = .none
-        field.returnKeyType = .next
-        field.translatesAutoresizingMaskIntoConstraints = false
-        return field
+    private let formStackView: UIStackView = {
+        let view = UIStackView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.axis = .vertical
+        view.spacing = DS.Spacing.l
+        return view
     }()
 
-    private let passwordField: UITextField = {
-        let field = UITextField()
-        field.placeholder = "Password"
-        field.borderStyle = .roundedRect
-        field.isSecureTextEntry = true
-        field.returnKeyType = .go
-        field.translatesAutoresizingMaskIntoConstraints = false
-        return field
-    }()
-
-    private let loginButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Login", for: .normal)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-
-    private let errorLabel: UILabel = {
+    private let titleLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .systemRed
-        label.numberOfLines = 0
-        label.isHidden = true
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.apply(.largeTitle)
+        label.text = "Finance Tracker"
+        label.textAlignment = .center
+        label.numberOfLines = 0
         return label
     }()
+
+    private let subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.apply(.body)
+        label.text = "Sign in to continue"
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private let emailField = DSTextField(title: "Email", placeholder: "Enter email")
+    private let passwordField = DSTextField(title: "Password", placeholder: "Enter password")
+    private let loginButton = DSButton(style: .primary)
 
     deinit {
         NotificationCenter.default.removeObserver(self)
@@ -61,7 +56,17 @@ final class AuthViewController: UIViewController, AuthView {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = DS.Colors.background
+
+        passwordField.isSecureTextEntry = true
+        emailField.keyboardType = .emailAddress
+        emailField.autocapitalizationType = .none
+        emailField.returnKeyType = .next
+        passwordField.returnKeyType = .go
+
+        loginButton.configure(title: "Login")
+        loginButton.setState(.normal)
+
         setupLayout()
         setupActions()
         setupKeyboardObservers()
@@ -69,13 +74,27 @@ final class AuthViewController: UIViewController, AuthView {
         presenter?.didLoad()
     }
 
-    private func setupActions() {
-        loginButton.addTarget(
-            self,
-            action: #selector(didTapLogin),
-            for: .touchUpInside
-        )
+    func render(_ state: AuthViewState) {
+        switch state {
+        case .idle:
+            loginButton.setState(.normal)
+            emailField.setState(.normal)
+            passwordField.setState(.normal)
 
+        case .loading:
+            emailField.setState(.normal)
+            passwordField.setState(.normal)
+            loginButton.setState(.loading)
+
+        case .error(let message):
+            loginButton.setState(.normal)
+            emailField.setState(.normal)
+            passwordField.setState(.error(mapAuthErrorMessage(message)))
+        }
+    }
+
+    private func setupActions() {
+        loginButton.addTarget(self, action: #selector(didTapLogin), for: .touchUpInside)
         emailField.delegate = self
         passwordField.delegate = self
     }
@@ -83,9 +102,10 @@ final class AuthViewController: UIViewController, AuthView {
     private func setupLayout() {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
+        contentView.addSubview(formStackView)
 
-        [emailField, passwordField, loginButton, errorLabel].forEach {
-            contentView.addSubview($0)
+        [titleLabel, subtitleLabel, emailField, passwordField, loginButton].forEach {
+            formStackView.addArrangedSubview($0)
         }
 
         NSLayoutConstraint.activate([
@@ -100,22 +120,19 @@ final class AuthViewController: UIViewController, AuthView {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
-            emailField.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 150),
-            emailField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            emailField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-
-            passwordField.topAnchor.constraint(equalTo: emailField.bottomAnchor, constant: 16),
-            passwordField.leadingAnchor.constraint(equalTo: emailField.leadingAnchor),
-            passwordField.trailingAnchor.constraint(equalTo: emailField.trailingAnchor),
-
-            loginButton.topAnchor.constraint(equalTo: passwordField.bottomAnchor, constant: 24),
-            loginButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-
-            errorLabel.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 16),
-            errorLabel.leadingAnchor.constraint(equalTo: emailField.leadingAnchor),
-            errorLabel.trailingAnchor.constraint(equalTo: emailField.trailingAnchor),
-            errorLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            formStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 120),
+            formStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: DS.Spacing.xl),
+            formStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -DS.Spacing.xl),
+            formStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -DS.Spacing.xl)
         ])
+    }
+
+    private func mapAuthErrorMessage(_ message: String) -> String {
+        if message.contains("AuthError") {
+            return "Invalid email or password"
+        }
+
+        return "Failed to sign in. Please try again."
     }
 
     @objc
@@ -124,23 +141,6 @@ final class AuthViewController: UIViewController, AuthView {
             email: emailField.text ?? "",
             password: passwordField.text ?? ""
         )
-    }
-
-    func render(_ state: AuthViewState) {
-        switch state {
-        case .idle:
-            loginButton.isEnabled = true
-            errorLabel.isHidden = true
-
-        case .loading:
-            loginButton.isEnabled = false
-            errorLabel.isHidden = true
-
-        case .error(let message):
-            loginButton.isEnabled = true
-            errorLabel.text = message
-            errorLabel.isHidden = false
-        }
     }
 }
 
@@ -171,7 +171,7 @@ private extension AuthViewController {
 
 extension AuthViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        if textField == emailField {
+        if textField === emailField.inputViewRef {
             passwordField.becomeFirstResponder()
         } else {
             textField.resignFirstResponder()
