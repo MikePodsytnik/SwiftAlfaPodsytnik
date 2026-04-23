@@ -1,5 +1,6 @@
 import UIKit
 
+// just a demo view controller (don't blame me for my architecture)
 final class BDUIDemoViewController: UIViewController {
     private lazy var actionHandler = BDUIActionHandler(
         context: BDUIActionContext(

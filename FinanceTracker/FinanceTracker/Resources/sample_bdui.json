@@ -1,0 +1,116 @@
+{
+  "type": "contentView",
+  "content": {
+    "backgroundColor": "surface",
+    "cornerRadius": "m",
+    "padding": {
+      "top": "l",
+      "left": "l",
+      "bottom": "l",
+      "right": "l"
+    },
+    "axis": "vertical",
+    "spacing": "l",
+    "alignment": "fill",
+    "distribution": "fill"
+  },
+  "layout": {
+    "backgroundColor": "surface",
+    "cornerRadius": "m"
+  },
+  "subviews": [
+    {
+      "type": "label",
+      "content": {
+        "text": "Backend Driven UI",
+        "typography": "title",
+        "textColor": "textPrimary",
+        "numberOfLines": 0
+      }
+    },
+    {
+      "type": "label",
+      "content": {
+        "text": "Модуль строит UIView и вложенные сабвью по JSON.",
+        "typography": "body",
+        "textColor": "textSecondary",
+        "numberOfLines": 0
+      }
+    },
+    {
+      "type": "stackView",
+      "content": {
+        "axis": "vertical",
+        "spacing": "m",
+        "alignment": "fill",
+        "distribution": "fill"
+      },
+      "subviews": [
+        {
+          "type": "infoRow",
+          "content": {
+            "title": "Архитектура",
+            "value": "Models / Tokens / Renderer / Actions"
+          }
+        },
+        {
+          "type": "infoRow",
+          "content": {
+            "title": "Design System",
+            "value": "DSButton, DSTextField, DSStateView, InfoRowView"
+          }
+        }
+      ]
+    },
+    {
+      "type": "textField",
+      "content": {
+        "title": "Email",
+        "placeholder": "Введите email",
+        "text": "student@itmo.ru",
+        "state": "normal",
+        "keyboardType": 7,
+        "returnKeyType": 9
+      }
+    },
+    {
+      "type": "button",
+      "content": {
+        "title": "Показать route action",
+        "style": "primary",
+        "state": "normal"
+      },
+      "action": {
+        "type": "route",
+        "route": "transactions/list"
+      }
+    },
+    {
+      "type": "button",
+      "content": {
+        "title": "Напечатать сообщение",
+        "style": "secondary",
+        "state": "normal"
+      },
+      "action": {
+        "type": "print",
+        "message": "Кнопка была нажата"
+      }
+    },
+    {
+      "type": "stateView",
+      "content": {
+        "state": "empty",
+        "title": "Нет данных",
+        "message": "Можно перезагрузить экран и попробовать снова.",
+        "buttonTitle": "Reload"
+      },
+      "action": {
+        "type": "reload"
+      },
+      "layout": {
+        "height": 260
+      }
+    }
+  ]
+}
